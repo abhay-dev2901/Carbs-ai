@@ -1,6 +1,6 @@
-dish,net_carbs_g
-biryani,45
-dal,12
-halwa,60
-poha,28
-roti,18
+dish,net_carbs_g,glycemic_index
+biryani,45,70
+dal,12,30
+halwa,60,75
+poha,28,65
+roti,18,55
