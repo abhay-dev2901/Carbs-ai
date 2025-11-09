@@ -27,17 +27,6 @@ Type 1 diabetics require precise carbohydrate counting for insulin dosing (1 uni
 - **Loss**: Huber loss (robust to outliers)
 - **Training**: Comprehensive evaluation metrics, early stopping
 
-## Key Improvements (v1 Enhancements)
-
-✅ **Fixed critical bug** in regressor label mapping  
-✅ **Enhanced architecture** with deeper networks and regularization  
-✅ **Improved data augmentation** (rotation, shear, brightness, zoom)  
-✅ **Early stopping & learning rate scheduling** for better convergence  
-✅ **Comprehensive evaluation** (MAE, RMSE, R², error distribution, ±10g accuracy)  
-✅ **Glycemic load prediction** from GI and net carbs  
-✅ **Insulin dosing recommendations** with customizable ratios  
-✅ **Clinical context** in predictions (blood glucose impact estimates)
-
 ## Performance Metrics
 
 After retraining with enhanced models, evaluate using:
@@ -56,20 +45,16 @@ python src/evaluate.py
 ### 1. Train Models
 
 ```bash
-# Train classifier first
 python src/train_classifier.py
 
-# Train regressor (uses classifier features)
 python src/train_regressor.py
 ```
 
 ### 2. Make Predictions
 
 ```bash
-# Basic prediction
-python src/predict.py data/images/biryani/0d81432b55.jpg
 
-# With custom insulin ratio (e.g., 1 unit per 10g carbs)
+python src/predict.py data/images/biryani/0d81432b55.jpg
 python src/predict.py data/images/biryani/0d81432b55.jpg --insulin-ratio 10
 ```
 
@@ -130,19 +115,4 @@ Pillow==10.4.0
 scikit-learn==1.5.1
 ```
 
-## Important Notes
 
-⚠️ **This is a v1 model for research/decision support**  
-⚠️ **Always consult healthcare providers for insulin dosing**  
-⚠️ **Individual insulin ratios vary (10-15g per unit)**  
-⚠️ **Model trained on limited dataset (5 dishes, 250 images)**  
-⚠️ **For production use, expand dataset and validate clinically**
-
-## Future Enhancements
-
-- [ ] Expand dataset with more dishes and variations
-- [ ] Portion size estimation
-- [ ] Multi-dish meal support
-- [ ] Real-time mobile app
-- [ ] Clinical validation study
-- [ ] Fine-tuning for individual user patterns
