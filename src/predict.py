@@ -108,39 +108,74 @@ def format_output(dish, net_carbs, confidence, gi=None, gl=None, insulin_dose=No
     print("• This is a v1 model - use as decision support tool")
     print("="*70 + "\n")
 
-if len(sys.argv) < 2:
-    print("Usage: python predict.py <image_path> [--insulin-ratio RATIO]")
-    print("\nExample:")
-    print("  python predict.py data/images/biryani/0d81432b55.jpg")
-    print("  python predict.py data/images/biryani/0d81432b55.jpg --insulin-ratio 10")
-    sys.exit(1)
 
-# Parse insulin ratio if provided
-insulin_ratio = 12  # Default: 1 unit per 12g carbs
-if len(sys.argv) > 2 and sys.argv[2] == "--insulin-ratio":
-    try:
-        insulin_ratio = float(sys.argv[3])
-    except (IndexError, ValueError):
-        print("Warning: Invalid insulin ratio, using default (12g per unit)")
+from health_knowledge import analyze_food_health
 
-img = load_and_preprocess_image(sys.argv[1])
+# === EXPORTED FUNCTION FOR BACKEND ===
+def predict_food(image_path, insulin_ratio=12):
+    """
+    Predict food details from an image path.
+    Returns a dictionary with result details.
+    """
+    img = load_and_preprocess_image(image_path)
+    
+    # Predict Class
+    class_probs = CLASSIFIER.predict(img, verbose=0)[0]
+    pred_class = np.argmax(class_probs)
+    dish = CLASS_NAMES[pred_class]
+    confidence = float(class_probs[pred_class] * 100)
+    
+    # Predict Carbs
+    pred_carbs = REGRESSOR.predict(img, verbose=0)[0][0]
+    pred_carbs = float(max(0, pred_carbs))
+    
+    # Metrics
+    gi = class_to_gi.get(dish, 55) # Default to 55 if not found
+    gl = None
+    if gi is not None:
+        gl = calculate_glycemic_load(pred_carbs, gi)
+        
+    insulin_dose = calculate_insulin_dose(pred_carbs, insulin_ratio)
+    
+    # Health Analysis
+    health_analysis = analyze_food_health(dish, gi)
+    
+    return {
+        "dish": dish,
+        "confidence": confidence,
+        "net_carbs": pred_carbs,
+        "glycemic_index": gi,
+        "glycemic_load": gl,
+        "gl_class": get_gl_classification(gl) if gl is not None else None,
+        "insulin_dose": insulin_dose,
+        "health_analysis": health_analysis
+    }
 
-class_probs = CLASSIFIER.predict(img, verbose=0)[0]
-pred_class = np.argmax(class_probs)
-dish = CLASS_NAMES[pred_class]
-confidence = class_probs[pred_class] * 100
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python predict.py <image_path> [--insulin-ratio RATIO]")
+        print("\nExample:")
+        print("  python predict.py data/images/biryani/0d81432b55.jpg")
+        print("  python predict.py data/images/biryani/0d81432b55.jpg --insulin-ratio 10")
+        sys.exit(1)
 
-pred_carbs = REGRESSOR.predict(img, verbose=0)[0][0]
-pred_carbs = max(0, pred_carbs)  # Ensure non-negative
+    # Parse insulin ratio if provided
+    insulin_ratio = 12  # Default: 1 unit per 12g carbs
+    if len(sys.argv) > 2 and sys.argv[2] == "--insulin-ratio":
+        try:
+            insulin_ratio = float(sys.argv[3])
+        except (IndexError, ValueError):
+            print("Warning: Invalid insulin ratio, using default (12g per unit)")
 
-# === CALCULATE GLYCEMIC LOAD ===
-gi = class_to_gi.get(dish, None)
-gl = None
-if gi is not None:
-    gl = calculate_glycemic_load(pred_carbs, gi)
+    # Run prediction provided as command line arguments
+    results = predict_food(sys.argv[1], insulin_ratio)
 
-# === CALCULATE INSULIN DOSE ===
-insulin_dose = calculate_insulin_dose(pred_carbs, insulin_ratio)
-
-# === DISPLAY RESULTS ===
-format_output(dish, pred_carbs, confidence, gi, gl, insulin_dose)
+    # === DISPLAY RESULTS ===
+    format_output(
+        results["dish"], 
+        results["net_carbs"], 
+        results["confidence"], 
+        results["glycemic_index"], 
+        results["glycemic_load"], 
+        results["insulin_dose"]
+    )
