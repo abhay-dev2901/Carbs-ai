@@ -43,7 +43,7 @@ except Exception as e:
     print(f"Warning: Could not load nutrition data: {e}")
     class_to_gi = {}
 
-CLASS_NAMES = ['biryani', 'dal', 'halwa', 'poha', 'roti']
+CLASS_NAMES = ['biryani', 'dal', 'halwa', 'poha', 'rasgulla', 'roti']
 
 def load_and_preprocess_image(path):
     """Load and preprocess image for model input"""
